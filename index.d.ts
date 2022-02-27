@@ -96,6 +96,23 @@ declare class Tempo {
   getConfidence(): number;
 }
 
+declare class Onset {
+  /**
+   * execute onset detection
+   */
+  do(buffer: InputBuffer): number;
+
+  /**
+   * get current onset
+   */
+  getCompression(): number;
+
+  /**
+   * get current onset confidence
+   */
+   getAwhitening(): number;
+}
+
 declare type Aubio = {
   Pitch: {
     /**
@@ -123,6 +140,17 @@ declare type Aubio = {
      * @param sampleRate - sampling rate of the signal to analyze
      */
     new (bufferSize: number, hopSize: number, sampleRate: number): Tempo;
+  };
+  Onset: {
+    /**
+     * Tempo detection
+     *
+     * @param method - pitch detection algorithm
+     * @param bufferSize - length of FFT
+     * @param hopSize - number of frames between two consecutive runs
+     * @param sampleRate - sampling rate of the signal to analyze
+     */
+    new (bufferSize: number, hopSize: number, sampleRate: number): Onset;
   };
 };
 

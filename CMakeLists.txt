@@ -16,8 +16,11 @@ set(source_files
   ${PROJECT_SOURCE_DIR}/aubio/src/spectral/phasevoc.c
   ${PROJECT_SOURCE_DIR}/aubio/src/spectral/specdesc.c
   ${PROJECT_SOURCE_DIR}/aubio/src/spectral/statistics.c
+  ${PROJECT_SOURCE_DIR}/aubio/src/spectral/awhitening.c
   ${PROJECT_SOURCE_DIR}/aubio/src/tempo/beattracking.c
   ${PROJECT_SOURCE_DIR}/aubio/src/tempo/tempo.c
+  ${PROJECT_SOURCE_DIR}/aubio/src/onset/peakpicker.c
+  ${PROJECT_SOURCE_DIR}/aubio/src/onset/onset.c
   ${PROJECT_SOURCE_DIR}/aubio/src/temporal/biquad.c
   ${PROJECT_SOURCE_DIR}/aubio/src/temporal/c_weighting.c
   ${PROJECT_SOURCE_DIR}/aubio/src/temporal/filter.c
@@ -29,6 +32,7 @@ set(source_files
   ${PROJECT_SOURCE_DIR}/aubio/src/lvec.c
   ${PROJECT_SOURCE_DIR}/aubio/src/mathutils.c
   ${PROJECT_SOURCE_DIR}/src/tempo.cc
+  ${PROJECT_SOURCE_DIR}/src/onset.cc
   ${PROJECT_SOURCE_DIR}/src/pitch.cc)
 
 add_definitions(-DHAVE_CONFIG_H)
