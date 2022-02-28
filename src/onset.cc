@@ -26,7 +26,7 @@ public:
 
   float getCompression() { return aubio_onset_get_compression(aubio_onset); }
 
-  float getAwhitening() { return aubio_onset_get_awhitening()(aubio_onset); }
+  // float getAwhitening() { return aubio_onset_get_awhitening()(aubio_onset); }
 //   float getAwhitening() { return aubio_onset_aubio_spectral_whitening_do()(aubio_onset); }
 
 private:
@@ -40,5 +40,5 @@ EMSCRIPTEN_BINDINGS(Onset) {
       .constructor<uint_t, uint_t, uint_t>()
       .function("do", &Onset::_do)
       .function("getCompression", &Onset::getCompression);
-      .function("getAwhitening", &Onset::getAwhitening);
+      // .function("getAwhitening", &Onset::getAwhitening);
 }
