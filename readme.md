@@ -7,7 +7,7 @@ aubiojs is a real-time audio processing library based on [aubio](https://github.
 - pitch detection
 - tempo detection
 
-## Usage
+## Usage:
 
 ### Web
 
