@@ -1,6 +1,6 @@
 # aubiojs [![npm-badge]][npm] [![build-badge]][build]
 
-[Online Demo](https://qiuxiang.github.io/aubiojs/)
+[Online Demo](https://yeonv.github.io/aubiojs/onset2.html)
 
 aubiojs is a real-time audio processing library based on [aubio](https://github.com/aubio/aubio), now including:
 
