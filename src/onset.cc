@@ -5,9 +5,11 @@ using namespace emscripten;
 
 class Onset {
 public:
+  // Onset(const char_t * method, uint_t buf_size, uint_t hop_size, uint_t sample_rate) {
   Onset(uint_t buf_size, uint_t hop_size, uint_t sample_rate) {
     buffer = new_fvec(hop_size);
-    aubio_onset = new_aubio_onset("default", buf_size, hop_size, sample_rate);
+    aubio_onset = new_aubio_onset("specflux", buf_size, hop_size, sample_rate);
+    // aubio_onset = new_aubio_onset(method, buf_size, hop_size, sample_rate);
   }
 
   ~Onset() {
@@ -37,6 +39,7 @@ private:
 
 EMSCRIPTEN_BINDINGS(Onset) {
   class_<Onset>("Onset")
+      // .constructor<const char_t *, uint_t, uint_t, uint_t>()
       .constructor<uint_t, uint_t, uint_t>()
       .function("do", &Onset::_do)
       .function("getCompression", &Onset::getCompression);
