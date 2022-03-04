@@ -2,6 +2,9 @@
 
 [Online Demo](https://yeonv.github.io/aubiojs/onset2.html)
 
+![image](https://user-images.githubusercontent.com/28861537/156787061-2cf6db93-9a92-4b3e-8c9b-a89cbe900c17.png)
+
+
 aubiojs is a real-time audio processing library based on [aubio](https://github.com/aubio/aubio), now including:
 
 - pitch detection
