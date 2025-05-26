@@ -1,66 +1,23 @@
+// Common input buffer type
 type InputBuffer = Float32Array | number[];
 
+// Definition for AubioFVec (represents fvec_t*)
 /**
- * default : use the default method
- *
- * Currently, the default method is set to yinfft .
- *
- * schmitt : Schmitt trigger
- *
- * This pitch extraction method implements a Schmitt trigger to estimate the
- * period of a signal.
- *
- * This file was derived from the tuneit project, written by Mario Lang to
- * detect the fundamental frequency of a sound.
- *
- * See http://delysid.org/tuneit.html
- *
- * fcomb : a fast harmonic comb filter
- *
- * This pitch extraction method implements a fast harmonic comb filter to
- * determine the fundamental frequency of a harmonic sound.
- *
- * This file was derived from the tuneit project, written by Mario Lang to
- * detect the fundamental frequency of a sound.
- *
- * See http://delysid.org/tuneit.html
- *
- * mcomb : multiple-comb filter
- *
- * This fundamental frequency estimation algorithm implements spectral
- * flattening, multi-comb filtering and peak histogramming.
- *
- * This method was designed by Juan P. Bello and described in:
- *
- * Juan-Pablo Bello. ``Towards the Automated Analysis of Simple Polyphonic
- * Music''.  PhD thesis, Centre for Digital Music, Queen Mary University of
- * London, London, UK, 2003.
- *
- * yin : YIN algorithm
- *
- * This algorithm was developed by A. de Cheveigne and H. Kawahara and
- * published in:
- *
- * De Cheveigné, A., Kawahara, H. (2002) "YIN, a fundamental frequency
- * estimator for speech and music", J. Acoust. Soc. Am. 111, 1917-1930.
- *
- * see http://recherche.ircam.fr/equipes/pcm/pub/people/cheveign.html
- *
- * yinfast : Yinfast algorithm
- *
- * This algorithm is equivalent to the YIN algorithm, but computed in the
- * spectral domain for efficiency. See also `python/demos/demo_yin_compare.py`.
- *
- * yinfft : Yinfft algorithm
- *
- * This algorithm was derived from the YIN algorithm. In this implementation, a
- * Fourier transform is used to compute a tapered square difference function,
- * which allows spectral weighting. Because the difference function is tapered,
- * the selection of the period is simplified.
- *
- * Paul Brossier, [Automatic annotation of musical audio for interactive
- * systems](http://aubio.org/phd/), Chapter 3, Pitch Analysis, PhD thesis,
- * Centre for Digital music, Queen Mary University of London, London, UK, 2006.
+ * Represents an fvec_t structure from Aubio, typically a pointer in Emscripten's memory.
+ */
+interface AubioFVec {
+  /** The number of elements in the vector. */
+  readonly length: number;
+  /** 
+   * A pointer (memory address) to the actual Float32Array data in Emscripten's HEAP.
+   * Use Module.HEAPF32.subarray(data_ptr / 4, data_ptr / 4 + length) to access it.
+   */
+  readonly data_ptr: number; 
+}
+
+// Pitch Method and Unit Types
+/**
+ * Pitch detection methods available in Aubio.
  */
 declare type PitchMethod =
   | "default"
@@ -72,57 +29,108 @@ declare type PitchMethod =
   | "yinfast"
   | "specacf";
 
+declare type PitchUnit = "Hz" | "midi" | "cent" | "bin";
+
+// Onset Method Type
+declare type OnsetMethod =
+  | "default"
+  | "energy"
+  | "hfc"
+  | "complex"
+  | "phase"
+  | "specdiff"
+  | "kl"
+  | "mkl"
+  | "specflux";
+
+// Tempo Method Type
+declare type TempoMethod = "default" | string;
+
+// Class Definitions
 declare class Pitch {
-  /**
-   * execute pitch detection on an input signal frame
-   */
+  constructor(method: PitchMethod, bufferSize: number, hopSize: number, sampleRate: number);
   do(buffer: InputBuffer): number;
+  getTolerance(): number;
+  setTolerance(tolerance: number): number;
+  getSilence(): number;
+  setSilence(silence: number): number;
+  getConfidence(): number;
+  setUnit(unit: PitchUnit): number;
+  delete(): void;
 }
 
 declare class Tempo {
-  /**
-   * execute tempo detection
-   */
+  constructor(method: TempoMethod, bufferSize: number, hopSize: number, sampleRate: number);
   do(buffer: InputBuffer): number;
-
-  /**
-   * get current tempo
-   */
   getBpm(): number;
-
-  /**
-   * get current tempo confidence
-   */
   getConfidence(): number;
+  getLast_s(): number;
+  setSilence(silence: number): number;
+  getSilence(): number;
+  setThreshold(threshold: number): number;
+  getThreshold(): number;
+  setDelay_s(delay: number): number;
+  getDelay_s(): number;
+  delete(): void;
 }
 
 declare class Onset {
-  /**
-   * execute onset detection
-   */
+  constructor(method: OnsetMethod, bufferSize: number, hopSize: number, sampleRate: number);
   do(buffer: InputBuffer): number;
-
-  /**
-   * get current onset
-   */
   getCompression(): number;
-
-  /**
-   * get current onset confidence
-   */
-   getAwhitening(): number;
+  setCompression(lambda: number): number;
+  getAwhitening(): number;
+  setAwhitening(enable: number): number;
+  getLast_s(): number;
+  setSilence(silence: number): number;
+  getSilence(): number;
+  setThreshold(threshold: number): number;
+  getThreshold(): number;
+  setMinioi_s(minioi: number): number;
+  getMinioi_s(): number;
+  setDelay_s(delay: number): number;
+  getDelay_s(): number;
+  delete(): void;
 }
 
+/**
+ * Class for performing Fast Fourier Transform (FFT) using Aubio.
+ */
+declare class AubioFFT {
+  /**
+   * Creates a new AubioFFT instance.
+   * @param bufferSize The size of the FFT buffer (e.g., 512, 1024). This should typically be a power of 2.
+   */
+  constructor(bufferSize: number);
+
+  /**
+   * Performs the FFT on the input audio data.
+   * The results (magnitudes and phases) can be retrieved using get_magnitudes() and get_phases() after calling this.
+   * @param inputBuffer A Float32Array containing the time-domain audio samples. Its length must match the bufferSize.
+   */
+  do_fft(inputBuffer: Float32Array): void;
+
+  /**
+   * Retrieves the magnitude spectrum from the last FFT operation.
+   * @returns An AubioFVec object representing the magnitude data.
+   */
+  get_magnitudes(): AubioFVec;
+
+  /**
+   * Retrieves the phase spectrum from the last FFT operation.
+   * @returns An AubioFVec object representing the phase data.
+   */
+  get_phases(): AubioFVec;
+
+  /**
+   * Releases the underlying C++ object's memory.
+   */
+  delete(): void;
+}
+
+// Main Aubio Module Type
 declare type Aubio = {
   Pitch: {
-    /**
-     * Pitch detection
-     *
-     * @param method - pitch detection algorithm
-     * @param bufferSize - size of the input buffer to analyse
-     * @param hopSize - step size between two consecutive analysis instant
-     * @param sampleRate - sampling rate of the signal
-     */
     new (
       method: PitchMethod,
       bufferSize: number,
@@ -131,42 +139,32 @@ declare type Aubio = {
     ): Pitch;
   };
   Tempo: {
-    /**
-     * Tempo detection
-     *
-     * @param method - pitch detection algorithm
-     * @param bufferSize - length of FFT
-     * @param hopSize - number of frames between two consecutive runs
-     * @param sampleRate - sampling rate of the signal to analyze
-     */
-    new (bufferSize: number, hopSize: number, sampleRate: number): Tempo;
+    new (
+      method: TempoMethod, // Updated constructor
+      bufferSize: number,
+      hopSize: number,
+      sampleRate: number
+    ): Tempo;
   };
   Onset: {
-    /**
-     * Tempo detection
-     *
-     * @param method - pitch detection algorithm
-     * @param bufferSize - length of FFT
-     * @param hopSize - number of frames between two consecutive runs
-     * @param sampleRate - sampling rate of the signal to analyze
-     */
-    new (bufferSize: number, hopSize: number, sampleRate: number): Onset;
+    new (
+      method: OnsetMethod, // Updated constructor
+      bufferSize: number,
+      hopSize: number,
+      sampleRate: number
+    ): Onset;
+  };
+  AubioFFT: {
+    new (bufferSize: number): AubioFFT; // Added AubioFFT
   };
 };
 
+// Default export
 /**
  * aubio is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * aubio is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with aubio.  If not, see <http://www.gnu.org/licenses/>.
  */
 declare function aubio(): Promise<Aubio>;
 
