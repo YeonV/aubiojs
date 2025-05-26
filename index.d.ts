@@ -5,14 +5,18 @@ type InputBuffer = Float32Array | number[];
 /**
  * Represents an fvec_t structure from Aubio, typically a pointer in Emscripten's memory.
  */
+/**
+ * Represents an fvec_t structure from Aubio, typically a pointer in Emscripten's memory.
+ */
 interface AubioFVec {
   /** The number of elements in the vector. */
   readonly length: number;
-  /** 
-   * A pointer (memory address) to the actual Float32Array data in Emscripten's HEAP.
-   * Use Module.HEAPF32.subarray(data_ptr / 4, data_ptr / 4 + length) to access it.
+  /**
+   * Retrieves a pointer (memory address) to the actual Float32Array data in Emscripten's HEAP.
+   * @returns A number representing the memory address.
+   * Use Module.HEAPF32.subarray(mags_fvec.get_data_ptr() / 4, mags_fvec.get_data_ptr() / 4 + mags_fvec.length) to access it.
    */
-  readonly data_ptr: number; 
+  get_data_ptr(): number; // Changed from 'readonly data_ptr: number;'
 }
 
 // Pitch Method and Unit Types

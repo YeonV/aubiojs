@@ -118,8 +118,9 @@ EMSCRIPTEN_BINDINGS(aubio_fft_module) {
     // This JS object will be a wrapper around the C++ fvec_t*.
     value_object<fvec_t>("AubioFVec")
         .field("length", &fvec_t::length)
-        // Expose the data pointer. JS will use this with HEAPF32/HEAPF64.
-        .field("data_ptr", &fvec_t::data, allow_raw_pointers()); 
+        .function("get_data_ptr", optional_override([](const fvec_t& vec) {
+            return reinterpret_cast<uintptr_t>(vec.data);
+        }));
 
     class_<AubioFFT>("AubioFFT")
         .constructor<uint_t>()

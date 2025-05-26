@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
 project(aubiojs)
+add_compile_definitions(AUBIO_SMPL_FLOAT=1)
 
 set(source_files
   ${PROJECT_SOURCE_DIR}/aubio/src/onset/peakpicker.c
