@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build": "export EM_NODE_JS=node && emcmake cmake -Bbuild -H. && make -Cbuild -j",
+    "build:win": "set EM_NODE_JS=node && emcmake cmake -Bbuild -H. && make -Cbuild -j",
     "test": "jasmine"
   },
   "devDependencies": {
