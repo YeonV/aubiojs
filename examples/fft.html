@@ -1,20 +1,182 @@
-// Assuming 'Module' is your Emscripten module instance
-// let fft = new Module.AubioFFT(window_size);
-// let inputSamples = new Float32Array(window_size);
-// /* fill inputSamples with your audio data */
-// fft.do_fft(inputSamples);
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AubioFFT Spectrum Analyzer</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #282c34;
+            color: white;
+            font-family: sans-serif;
+        }
+        #controls {
+            margin-bottom: 20px;
+        }
+        #startButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid white;
+            background-color: transparent;
+            color: white;
+            border-radius: 5px;
+        }
+        #startButton:hover {
+            background-color: #3c4049;
+        }
+        #fftCanvas {
+            border: 1px solid #61dafb;
+            /* Dimensions will be set in JavaScript */
+        }
+        footer {
+            position: absolute;
+            bottom: 10px;
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button id="startButton">Start Microphone</button>
+    </div>
+    <canvas id="fftCanvas"></canvas>
+    <script src="./aubio.js"></script>
+    <script>
+        const startButton = document.getElementById('startButton');
+        const canvas = document.getElementById('fftCanvas');
+        const canvasCtx = canvas.getContext('2d');
 
-// let magnitudes_fvec = fft.get_magnitudes();
-// let num_bins = magnitudes_fvec.length;
-// let magnitudes_ptr = magnitudes_fvec.data_ptr; // This is a memory address (number)
-// // Access the data from Emscripten's heap:
-// let magnitudes = Module.HEAPF32.subarray(magnitudes_ptr / 4, magnitudes_ptr / 4 + num_bins);
+        let audioContext;
+        let scriptProcessor;
+        let mediaStreamSource;
+        let aubioInstance; // To hold the loaded aubio module
+        let aubioFFT;      // To hold the AubioFFT instance
 
-// let phases_fvec = fft.get_phases();
-// let phases_ptr = phases_fvec.data_ptr;
-// let phases = Module.HEAPF32.subarray(phases_ptr / 4, phases_ptr / 4 + num_bins);
+        const fftSize = 1024; // Example FFT size, power of 2
+        // Sample rate will be derived from AudioContext, but AubioFFT is initialized without it.
+        // The frequency resolution of the FFT depends on the actual sample rate of the input.
 
-// console.log('Magnitudes:', magnitudes);
-// console.log('Phases:', phases);
+        // Visualization variables
+        let magnitudes; // Will hold the AubioFVec object
 
-// fft.delete(); // Important: Call delete() when done to free C++ memory
+        // Canvas setup
+        canvas.width = 800;
+        canvas.height = 300;
+
+        startButton.addEventListener('click', initAudio);
+
+        async function initAudio() {
+            if (audioContext) {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: false
+                });
+                
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                scriptProcessor = audioContext.createScriptProcessor(fftSize, 1, 1);
+                scriptProcessor.onaudioprocess = processAudio;
+                
+                mediaStreamSource = audioContext.createMediaStreamSource(stream);
+                mediaStreamSource.connect(scriptProcessor);
+                scriptProcessor.connect(audioContext.destination);
+
+                aubio().then((loadedAubio) => {
+                    aubioInstance = loadedAubio;
+                    aubioFFT = new aubioInstance.AubioFFT(fftSize); 
+                    startButton.textContent = 'Microphone Active';
+                    startButton.disabled = true;
+                    console.log('AubioFFT initialized. AudioContext Sample Rate:', audioContext.sampleRate);
+                    requestAnimationFrame(draw); 
+                }).catch(err => {
+                    console.error('Failed to load aubio:', err);
+                    alert('Failed to load aubio.js: ' + err.message);
+                });
+
+            } catch (err) {
+                console.error('Error initializing audio:', err);
+                alert('Error initializing audio: ' + err.message);
+            }
+        }
+
+        function processAudio(audioProcessingEvent) {
+            if (!aubioFFT || !aubioInstance) { // Ensure aubioInstance is also checked
+                return;
+            }
+
+            const inputBuffer = audioProcessingEvent.inputBuffer;
+            const channelData = inputBuffer.getChannelData(0); 
+
+            try {
+                aubioFFT.do_fft(channelData);
+                magnitudes = aubioFFT.get_magnitudes(); // This is an AubioFVec
+            } catch (e) {
+                console.error("Error during FFT processing:", e);
+                // Consider stopping or alerting user if errors persist
+            }
+        }
+        
+        function draw() {
+            if (!aubioInstance || !magnitudes) {
+                if (audioContext && audioContext.state === 'running') {
+                    requestAnimationFrame(draw);
+                }
+                return;
+            }
+
+            const num_bins = magnitudes.length;
+            const mags_ptr = magnitudes.data_ptr;
+            
+            if (mags_ptr === 0) {
+                console.error("Magnitudes data pointer is null.");
+                if (audioContext && audioContext.state === 'running') {
+                    requestAnimationFrame(draw);
+                }
+                return;
+            }
+            // Access data from Emscripten's HEAP
+            const actualMagnitudes = aubioInstance.HEAPF32.subarray(mags_ptr / 4, mags_ptr / 4 + num_bins);
+
+            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+            canvasCtx.fillStyle = '#282c34';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const barWidth = canvas.width / num_bins;
+            canvasCtx.fillStyle = '#61dafb';
+
+            for (let i = 0; i < num_bins; i++) {
+                // Simple linear scaling - might need adjustment for good visual results
+                // A logarithmic scale (dB) is often better for audio magnitudes.
+                const arbitraryScalingFactor = 200; // Tune this!
+                let barHeight = actualMagnitudes[i] * arbitraryScalingFactor;
+                barHeight = Math.min(barHeight, canvas.height); // Cap height
+                barHeight = Math.max(barHeight, 0); // Ensure non-negative
+
+                const x = i * barWidth;
+                const y = canvas.height - barHeight;
+                
+                canvasCtx.fillRect(x, y, barWidth - 1, barHeight);
+            }
+            
+            if (audioContext && audioContext.state === 'running') {
+                 requestAnimationFrame(draw);
+            }
+        }
+    </script>
+    <footer>Aubio.js FFT Demo</footer>
+</body>
+</html>
