@@ -1,0 +1,20 @@
+// Assuming 'Module' is your Emscripten module instance
+// let fft = new Module.AubioFFT(window_size);
+// let inputSamples = new Float32Array(window_size);
+// /* fill inputSamples with your audio data */
+// fft.do_fft(inputSamples);
+
+// let magnitudes_fvec = fft.get_magnitudes();
+// let num_bins = magnitudes_fvec.length;
+// let magnitudes_ptr = magnitudes_fvec.data_ptr; // This is a memory address (number)
+// // Access the data from Emscripten's heap:
+// let magnitudes = Module.HEAPF32.subarray(magnitudes_ptr / 4, magnitudes_ptr / 4 + num_bins);
+
+// let phases_fvec = fft.get_phases();
+// let phases_ptr = phases_fvec.data_ptr;
+// let phases = Module.HEAPF32.subarray(phases_ptr / 4, phases_ptr / 4 + num_bins);
+
+// console.log('Magnitudes:', magnitudes);
+// console.log('Phases:', phases);
+
+// fft.delete(); // Important: Call delete() when done to free C++ memory
