@@ -138,10 +138,10 @@
                 return;
             }
 
-            const num_bins = magnitudes.length;
-            const mags_ptr = magnitudes.data_ptr;
-            
-            if (mags_ptr === 0) {
+            const num_bins = magnitudes.length; // Access length directly from the object
+            const mags_ptr = magnitudes.get_data_ptr(); // Call the new method get_data_ptr()
+
+            if (mags_ptr === 0) { // Good practice to check if pointer is valid
                 console.error("Magnitudes data pointer is null.");
                 if (audioContext && audioContext.state === 'running') {
                     requestAnimationFrame(draw);
@@ -151,6 +151,7 @@
             // Access data from Emscripten's HEAP
             const actualMagnitudes = aubioInstance.HEAPF32.subarray(mags_ptr / 4, mags_ptr / 4 + num_bins);
 
+            // The rest of your drawing code (clearRect, fillRect, loop for bars) remains the same:
             canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
             canvasCtx.fillStyle = '#282c34';
             canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
@@ -159,25 +160,24 @@
             canvasCtx.fillStyle = '#61dafb';
 
             for (let i = 0; i < num_bins; i++) {
-                // Simple linear scaling - might need adjustment for good visual results
-                // A logarithmic scale (dB) is often better for audio magnitudes.
-                const arbitraryScalingFactor = 200; // Tune this!
+                const arbitraryScalingFactor = 200;
                 let barHeight = actualMagnitudes[i] * arbitraryScalingFactor;
-                barHeight = Math.min(barHeight, canvas.height); // Cap height
-                barHeight = Math.max(barHeight, 0); // Ensure non-negative
+                barHeight = Math.min(barHeight, canvas.height);
+                barHeight = Math.max(barHeight, 0);
 
                 const x = i * barWidth;
                 const y = canvas.height - barHeight;
-                
+
                 canvasCtx.fillRect(x, y, barWidth - 1, barHeight);
             }
-            
+
             if (audioContext && audioContext.state === 'running') {
                  requestAnimationFrame(draw);
             }
         }
+
     </script>
     <footer>Aubio.js FFT Demo</footer>
-    
+
 </body>
 </html>
